@@ -249,6 +249,67 @@ local function IsOpen(menuId)
     return isOpen
 end
 
+local function Update(data)
+    if not isOpen or not currentMenu then return false end
+    if not data then return false end
+
+    -- Update items if provided
+    if data.items then
+        for _, item in ipairs(data.items) do
+            ProcessItemIcon(item)
+        end
+        currentMenu.items = data.items
+    end
+
+    -- Update other properties
+    if data.title then currentMenu.title = data.title end
+    if data.subtitle then currentMenu.subtitle = data.subtitle end
+
+    SendNUIMessage({
+        action = 'UPDATE_MENU',
+        data = currentMenu
+    })
+
+    Debug('Menu updated')
+    return true
+end
+
+local function UpdateItem(index, itemData)
+    if not isOpen or not currentMenu then return false end
+    if not index or not itemData then return false end
+    if not currentMenu.items or not currentMenu.items[index] then return false end
+
+    -- Merge new data into existing item
+    for key, value in pairs(itemData) do
+        currentMenu.items[index][key] = value
+    end
+
+    ProcessItemIcon(currentMenu.items[index])
+
+    SendNUIMessage({
+        action = 'UPDATE_ITEM',
+        data = {
+            index = index,
+            item = currentMenu.items[index]
+        }
+    })
+
+    Debug('Item updated:', index)
+    return true
+end
+
+local function Refresh()
+    if not isOpen or not currentMenu then return false end
+
+    SendNUIMessage({
+        action = 'UPDATE_MENU',
+        data = currentMenu
+    })
+
+    Debug('Menu refreshed')
+    return true
+end
+
 -- Legacy API Functions
 
 local function OpenMenu(data, sort, skipFirst, options)
@@ -357,7 +418,18 @@ RegisterNUICallback('onSelect', function(data, cb)
         local callback = menuCallbacks[menuId].onSelect
         if callback then
             -- Pass persist state so callback knows menu is still open
-            callback(item, data.index, shouldPersist)
+            local result = callback(item, data.index, shouldPersist)
+
+            -- If callback returns data and menu is persisting, update the menu
+            if shouldPersist and result then
+                if type(result) == 'table' then
+                    -- Check if it's an items array or full menu data
+                    if result[1] or result.items then
+                        local updateData = result.items and result or { items = result }
+                        Update(updateData)
+                    end
+                end
+            end
         end
         if not shouldPersist then
             menuCallbacks[menuId] = nil
@@ -431,6 +503,14 @@ RegisterNetEvent('oxide-menu:client:close', function(menuId)
     Close(menuId)
 end)
 
+RegisterNetEvent('oxide-menu:client:update', function(data)
+    Update(data)
+end)
+
+RegisterNetEvent('oxide-menu:client:updateItem', function(index, itemData)
+    UpdateItem(index, itemData)
+end)
+
 RegisterNetEvent('QBCore:Client:UpdateObject', function()
     QBCore = exports['qb-core']:GetCoreObject()
 end)
@@ -441,6 +521,9 @@ exports('open', Open)
 exports('close', Close)
 exports('register', Register)
 exports('isOpen', IsOpen)
+exports('update', Update)
+exports('updateItem', UpdateItem)
+exports('refresh', Refresh)
 
 exports('openMenu', OpenMenu)
 exports('closeMenu', CloseMenu)
@@ -634,6 +717,105 @@ if Config.Debug then
         })
     end, false)
 
+    -- Live update demo (onSelect return value)
+    local demoShopStock = { water = 5, bread = 3, bandage = 2 }
+
+    local function GetDemoShopItems()
+        return {
+            { label = 'SHOP - Live Stock', isHeader = true },
+            {
+                label = 'Water',
+                description = '$2 | Stock: ' .. demoShopStock.water,
+                icon = 'fas fa-tint',
+                disabled = demoShopStock.water <= 0,
+                _item = 'water'
+            },
+            {
+                label = 'Bread',
+                description = '$3 | Stock: ' .. demoShopStock.bread,
+                icon = 'fas fa-bread-slice',
+                disabled = demoShopStock.bread <= 0,
+                _item = 'bread'
+            },
+            {
+                label = 'Bandage',
+                description = '$10 | Stock: ' .. demoShopStock.bandage,
+                icon = 'fas fa-band-aid',
+                disabled = demoShopStock.bandage <= 0,
+                _item = 'bandage'
+            },
+            { type = 'divider' },
+            { label = 'Restock All', icon = 'fas fa-boxes', _item = 'restock' },
+            { label = 'Exit', icon = 'fas fa-door-open', persist = false },
+        }
+    end
+
+    RegisterCommand('oxidemenu9', function()
+        -- Reset stock for demo
+        demoShopStock = { water = 5, bread = 3, bandage = 2 }
+
+        Open({
+            id = 'demo-live-update',
+            title = 'Live Update Shop',
+            subtitle = 'Stock updates on purchase',
+            persist = true,
+            items = GetDemoShopItems(),
+            onSelect = function(item, index, isPersisting)
+                if not isPersisting then return end
+
+                local itemKey = item._item
+                if itemKey == 'restock' then
+                    demoShopStock = { water = 5, bread = 3, bandage = 2 }
+                    QBCore.Functions.Notify('Stock restocked!', 'success')
+                elseif itemKey and demoShopStock[itemKey] then
+                    if demoShopStock[itemKey] > 0 then
+                        demoShopStock[itemKey] = demoShopStock[itemKey] - 1
+                        QBCore.Functions.Notify('Bought ' .. item.label .. '! (' .. demoShopStock[itemKey] .. ' left)', 'success')
+                    end
+                end
+
+                -- Return updated items to refresh menu
+                return GetDemoShopItems()
+            end
+        })
+    end, false)
+
+    -- Live update demo (using updateItem export)
+    RegisterCommand('oxidemenu10', function()
+        local clickCounts = { 0, 0, 0 }
+
+        Open({
+            id = 'demo-update-item',
+            title = 'Update Item Demo',
+            subtitle = 'Click counters update individually',
+            persist = true,
+            items = {
+                { label = 'Counter 1', description = 'Clicks: 0', icon = 'fas fa-hand-pointer', _counter = 1 },
+                { label = 'Counter 2', description = 'Clicks: 0', icon = 'fas fa-hand-pointer', _counter = 2 },
+                { label = 'Counter 3', description = 'Clicks: 0', icon = 'fas fa-hand-pointer', _counter = 3 },
+                { type = 'divider' },
+                { label = 'Reset All', icon = 'fas fa-redo', _reset = true },
+                { label = 'Exit', icon = 'fas fa-door-open', persist = false },
+            },
+            onSelect = function(item, index, isPersisting)
+                if not isPersisting then return end
+
+                if item._reset then
+                    clickCounts = { 0, 0, 0 }
+                    for i = 1, 3 do
+                        UpdateItem(i, { description = 'Clicks: 0' })
+                    end
+                    QBCore.Functions.Notify('Counters reset!', 'primary')
+                elseif item._counter then
+                    local c = item._counter
+                    clickCounts[c] = clickCounts[c] + 1
+                    -- Update just this one item
+                    UpdateItem(index, { description = 'Clicks: ' .. clickCounts[c] })
+                end
+            end
+        })
+    end, false)
+
     -- Demo event handlers
     RegisterNetEvent('oxide-menu:demo:notify', function(data)
         QBCore.Functions.Notify(data.msg or 'Action completed!', 'success')
@@ -654,5 +836,5 @@ if Config.Debug then
         QBCore.Functions.Notify(item.label .. ' set to: ' .. value, 'primary')
     end)
 
-    print('[oxide-menu] Debug mode enabled - Demo commands: /oxidemenu, /oxidemenu2, /oxidemenu3, /oxidemenu4, /oxidemenu5, /oxidemenu6, /oxidemenu7, /oxidemenu8')
+    print('[oxide-menu] Debug mode enabled - Demo commands: /oxidemenu through /oxidemenu10')
 end

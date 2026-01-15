@@ -13,6 +13,7 @@ Complete feature documentation for Oxide Menu.
 - [Keyboard Navigation](#keyboard-navigation)
 - [Submenu System](#submenu-system)
 - [Menu Persistence](#menu-persistence)
+- [Live Updates](#live-updates)
 - [QBCore Integration](#qbcore-integration)
 - [Sound Effects](#sound-effects)
 - [Security Features](#security-features)
@@ -406,6 +407,90 @@ exports['oxide-menu']:open({
 
 ---
 
+## Live Updates
+
+Update menu data while the menu is open. Essential for persistent menus showing dynamic data.
+
+### Why Live Updates?
+
+When using `persist = true`, the menu stays open but displays stale data:
+- Stock counts don't update after purchase
+- Prices may change
+- Items may become unavailable
+
+### Update Methods
+
+| Method | Use Case | Performance |
+|--------|----------|-------------|
+| `onSelect` return | Refresh after selection | Good |
+| `update()` | Replace all items | Good |
+| `updateItem()` | Update single item | Best |
+| Server events | External triggers | Good |
+
+### onSelect Return Value
+
+Return new items from `onSelect` to auto-refresh:
+
+```lua
+exports['oxide-menu']:open({
+    persist = true,
+    items = getItems(),
+    onSelect = function(item, index, isPersisting)
+        if isPersisting then
+            processSelection(item)
+            return getItems()  -- Return refreshed items
+        end
+    end
+})
+```
+
+### update() Export
+
+Replace items or update title/subtitle:
+
+```lua
+-- After external event changes data
+exports['oxide-menu']:update({
+    items = getUpdatedItems(),
+    subtitle = 'Last updated: ' .. os.date('%H:%M')
+})
+```
+
+### updateItem() Export
+
+Update a single item (most efficient):
+
+```lua
+-- Update just the item that changed
+exports['oxide-menu']:updateItem(3, {
+    description = 'Stock: ' .. newStock,
+    disabled = newStock <= 0
+})
+```
+
+### Server-Triggered Updates
+
+Server can push updates to client menus:
+
+```lua
+-- Server-side
+RegisterNetEvent('shop:stockChanged', function(itemIndex, newStock)
+    TriggerClientEvent('oxide-menu:client:updateItem', source, itemIndex, {
+        description = 'Stock: ' .. newStock,
+        disabled = newStock <= 0
+    })
+end)
+```
+
+### Best Practices
+
+1. **Use `updateItem()` when possible** - Only re-renders one item
+2. **Return from `onSelect`** - Natural flow for selection-triggered updates
+3. **Use `update()` for bulk changes** - When multiple items change at once
+4. **Cache item generators** - Create functions that return fresh item arrays
+
+---
+
 ## QBCore Integration
 
 Seamless integration with QBCore framework.
@@ -555,6 +640,7 @@ When `Config.Debug = true`, blocked events are logged:
 | Inputs | No | Yes |
 | Submenus | Limited | Full support |
 | Menu persistence | No | Yes |
+| Live updates | No | Yes |
 | Security | No | Optional whitelist |
 | Callbacks | Limited | Full support |
 

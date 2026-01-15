@@ -17,6 +17,7 @@ Modern Menu System for QBCore Framework - A sleek, glassmorphic menu with suppor
 - Keyboard navigation (arrow keys, enter, escape)
 - Submenu support with history navigation
 - Menu persistence (keep open after selection)
+- Live updates (refresh menu data while open)
 - Header sections and dividers
 
 ### Interactive Elements
@@ -136,6 +137,11 @@ local isMyMenuOpen = exports['oxide-menu']:isOpen('my-menu')
 
 -- Register reusable menu
 exports['oxide-menu']:register('my-menu', menuData)
+
+-- Live updates (while menu is open)
+exports['oxide-menu']:update({ items = newItems })  -- Update all items
+exports['oxide-menu']:updateItem(2, { description = 'New text' })  -- Update single item
+exports['oxide-menu']:refresh()  -- Re-render current data
 ```
 
 ### Legacy API (qb-menu Format)
@@ -307,6 +313,8 @@ When `Config.Debug = true`, these test commands are available:
 | `/oxidemenu6 [pos]` | Position testing (left/center/right) |
 | `/oxidemenu7` | Menu-level persist (shop) |
 | `/oxidemenu8` | Item-level persist (vehicle controls) |
+| `/oxidemenu9` | Live updates (onSelect return) |
+| `/oxidemenu10` | Live updates (updateItem export) |
 
 ## Documentation
 

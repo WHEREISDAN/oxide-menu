@@ -12,6 +12,9 @@ Complete API documentation for Oxide Menu.
   - [close](#close)
   - [isOpen](#isopen)
   - [register](#register)
+  - [update](#update)
+  - [updateItem](#updateitem)
+  - [refresh](#refresh)
 - [Legacy API](#legacy-api)
   - [openMenu](#openmenu)
   - [closeMenu](#closemenu)
@@ -202,6 +205,114 @@ exports['oxide-menu']:open({
     }
 })
 ```
+
+---
+
+### update
+
+Updates the currently open menu with new data. Useful for refreshing items after state changes.
+
+```lua
+exports['oxide-menu']:update(data)
+```
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| data | table | Yes | Update data (items, title, subtitle) |
+
+#### Update Data Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| items | table | New items array (replaces all items) |
+| title | string | New menu title |
+| subtitle | string | New menu subtitle |
+
+#### Returns
+
+| Type | Description |
+|------|-------------|
+| boolean | true if update was successful |
+
+#### Example
+
+```lua
+-- Update all items
+exports['oxide-menu']:update({
+    items = {
+        { label = 'Water', description = 'Stock: 3' },
+        { label = 'Bread', description = 'SOLD OUT', disabled = true },
+    }
+})
+
+-- Update title only
+exports['oxide-menu']:update({
+    subtitle = 'Updated: ' .. os.date('%H:%M:%S')
+})
+```
+
+---
+
+### updateItem
+
+Updates a single item in the currently open menu by index.
+
+```lua
+exports['oxide-menu']:updateItem(index, itemData)
+```
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| index | number | Yes | 1-based item index |
+| itemData | table | Yes | Properties to update (merged with existing) |
+
+#### Returns
+
+| Type | Description |
+|------|-------------|
+| boolean | true if update was successful |
+
+#### Example
+
+```lua
+-- Update item description
+exports['oxide-menu']:updateItem(2, {
+    description = 'Stock: 4'
+})
+
+-- Disable an item
+exports['oxide-menu']:updateItem(3, {
+    label = 'Bandage (SOLD OUT)',
+    disabled = true
+})
+
+-- Update multiple properties
+exports['oxide-menu']:updateItem(1, {
+    label = 'Water (On Sale!)',
+    description = '$1.50 | Stock: 10',
+    icon = 'fas fa-tag'
+})
+```
+
+---
+
+### refresh
+
+Re-renders the current menu with its existing data. Useful after modifying `currentMenu` directly.
+
+```lua
+exports['oxide-menu']:refresh()
+```
+
+#### Returns
+
+| Type | Description |
+|------|-------------|
+| boolean | true if refresh was successful |
 
 ---
 
@@ -516,6 +627,23 @@ AddEventHandler('qb-menu:client:menuClosed', function()
 end)
 ```
 
+### Server-Triggered Updates
+
+The server can push updates to open menus:
+
+```lua
+-- Server-side: Update entire menu
+TriggerClientEvent('oxide-menu:client:update', source, {
+    items = newItems
+})
+
+-- Server-side: Update single item
+TriggerClientEvent('oxide-menu:client:updateItem', source, 2, {
+    description = 'Price: $50',
+    disabled = true
+})
+```
+
 ---
 
 ## Integration Examples
@@ -638,6 +766,80 @@ local function OpenShop()
             { type = 'divider' },
             { label = 'Done Shopping', icon = 'fas fa-check', persist = false },  -- Override: closes menu
         }
+    })
+end
+```
+
+### Live Updating Shop (onSelect Return)
+
+```lua
+-- Shop with live stock updates using onSelect return value
+local stock = { water = 10, bread = 5 }
+
+local function GetShopItems()
+    return {
+        { label = 'ITEMS', isHeader = true },
+        {
+            label = 'Water',
+            description = '$2 | Stock: ' .. stock.water,
+            disabled = stock.water <= 0,
+            _item = 'water'
+        },
+        {
+            label = 'Bread',
+            description = '$3 | Stock: ' .. stock.bread,
+            disabled = stock.bread <= 0,
+            _item = 'bread'
+        },
+        { type = 'divider' },
+        { label = 'Exit', persist = false },
+    }
+end
+
+local function OpenShop()
+    exports['oxide-menu']:open({
+        id = 'live-shop',
+        title = 'Live Stock Shop',
+        persist = true,
+        items = GetShopItems(),
+        onSelect = function(item, index, isPersisting)
+            if not isPersisting or not item._item then return end
+
+            if stock[item._item] > 0 then
+                stock[item._item] = stock[item._item] - 1
+                -- Return updated items to refresh menu
+                return GetShopItems()
+            end
+        end
+    })
+end
+```
+
+### Live Updating with updateItem
+
+```lua
+-- Update individual items for better performance
+local function OpenCounterMenu()
+    local counts = { 0, 0, 0 }
+
+    exports['oxide-menu']:open({
+        id = 'counters',
+        title = 'Click Counters',
+        persist = true,
+        items = {
+            { label = 'Counter 1', description = 'Clicks: 0', _idx = 1 },
+            { label = 'Counter 2', description = 'Clicks: 0', _idx = 2 },
+            { label = 'Counter 3', description = 'Clicks: 0', _idx = 3 },
+        },
+        onSelect = function(item, index, isPersisting)
+            if not isPersisting or not item._idx then return end
+
+            counts[item._idx] = counts[item._idx] + 1
+            -- Update just this item (more efficient than full refresh)
+            exports['oxide-menu']:updateItem(index, {
+                description = 'Clicks: ' .. counts[item._idx]
+            })
+        end
     })
 end
 ```

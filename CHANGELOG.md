@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2025-01-15
+
+### Added
+
+- **Live Updates**: Update menu data while menus are open
+  - `update()` export - Replace all items or update title/subtitle
+  - `updateItem()` export - Update a single item by index (most efficient)
+  - `refresh()` export - Re-render menu with current data
+  - `onSelect` return value - Return new items to auto-refresh menu
+  - Server events `oxide-menu:client:update` and `oxide-menu:client:updateItem`
+  - NUI handlers for `UPDATE_MENU` and `UPDATE_ITEM` actions
+
+- **Demo Commands**: Two new demo commands for testing live updates
+  - `/oxidemenu9` - Live stock shop using onSelect return value
+  - `/oxidemenu10` - Click counters using updateItem export
+
+### Changed
+
+- `onSelect` callback can now return items/menu data to trigger refresh
+
+---
+
 ## [1.1.0] - 2025-01-15
 
 ### Added
@@ -76,5 +98,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Description |
 |---------|------|-------------|
+| 1.2.0 | 2025-01-15 | Live updates feature |
 | 1.1.0 | 2025-01-15 | Menu persistence feature |
 | 1.0.0 | 2025-01-15 | Initial release |

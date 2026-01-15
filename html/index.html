@@ -434,6 +434,26 @@
                         renderMenu();
                         break;
 
+                    case 'UPDATE_MENU':
+                        if (isOpen && data) {
+                            currentMenu = data;
+                            // Preserve search but reset active index
+                            activeIndex = -1;
+                            updateItemsOnly();
+                        }
+                        break;
+
+                    case 'UPDATE_ITEM':
+                        if (isOpen && currentMenu && data && data.index && data.item) {
+                            // Update item in current menu (1-indexed from Lua)
+                            var idx = data.index - 1;
+                            if (currentMenu.items && currentMenu.items[idx]) {
+                                currentMenu.items[idx] = data.item;
+                                updateItemsOnly();
+                            }
+                        }
+                        break;
+
                     case 'SET_THEME':
                         if (data && data.theme) {
                             document.documentElement.setAttribute('data-theme', data.theme);

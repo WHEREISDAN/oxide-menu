@@ -61,6 +61,7 @@ exports['oxide-menu']:open(menuData)
 | subtitle | string | nil | Subtitle below title |
 | position | string | Config.Position | 'left', 'center', 'right' |
 | searchable | boolean | true | Enable search bar |
+| persist | boolean | nil | Keep menu open after item selection |
 | items | table | {} | Array of menu items |
 | onSelect | function | nil | Callback when item selected |
 | onClose | function | nil | Callback when menu closed |
@@ -355,6 +356,7 @@ Standard clickable menu item.
     description = 'Optional description',
     icon = 'fas fa-star',
     disabled = false,
+    persist = false,  -- Keep menu open after selection
 
     -- Actions (choose one):
     event = 'client:eventName',
@@ -611,6 +613,54 @@ local function OpenPoliceMenu()
             { type = 'divider' },
             { label = 'Armory', icon = 'fas fa-shield-alt', submenu = 'police-armory' },
             { label = 'Vehicles', icon = 'fas fa-car', submenu = 'police-vehicles' },
+        }
+    })
+end
+```
+
+### Persistent Shop Menu
+
+```lua
+-- Menu stays open after each purchase
+local function OpenShop()
+    exports['oxide-menu']:open({
+        id = 'quick-shop',
+        title = '24/7 Store',
+        subtitle = 'Quick Buy Mode',
+        persist = true,  -- Menu-level: all items keep menu open
+        items = {
+            { label = 'DRINKS', isHeader = true },
+            { label = 'Water', description = '$2', icon = 'water', serverEvent = 'shop:buy', args = { item = 'water', price = 2 } },
+            { label = 'Soda', description = '$3', icon = 'soda', serverEvent = 'shop:buy', args = { item = 'soda', price = 3 } },
+            { type = 'divider' },
+            { label = 'FOOD', isHeader = true },
+            { label = 'Sandwich', description = '$5', icon = 'sandwich', serverEvent = 'shop:buy', args = { item = 'sandwich', price = 5 } },
+            { type = 'divider' },
+            { label = 'Done Shopping', icon = 'fas fa-check', persist = false },  -- Override: closes menu
+        }
+    })
+end
+```
+
+### Vehicle Menu with Mixed Persist
+
+```lua
+-- Some items stay open, others close
+local function OpenVehicleMenu()
+    exports['oxide-menu']:open({
+        id = 'vehicle-controls',
+        title = 'Vehicle Options',
+        items = {
+            { label = 'TOGGLES', isHeader = true },
+            -- These keep the menu open for quick toggling
+            { label = 'Engine', icon = 'fas fa-power-off', persist = true, event = 'vehicle:toggleEngine' },
+            { label = 'Lights', icon = 'fas fa-lightbulb', persist = true, event = 'vehicle:toggleLights' },
+            { label = 'Lock', icon = 'fas fa-lock', persist = true, event = 'vehicle:toggleLock' },
+            { type = 'divider' },
+            { label = 'ACTIONS', isHeader = true },
+            -- These close the menu (default behavior)
+            { label = 'Store Vehicle', icon = 'fas fa-warehouse', serverEvent = 'vehicle:store' },
+            { label = 'Transfer Keys', icon = 'fas fa-key', serverEvent = 'vehicle:transfer' },
         }
     })
 end

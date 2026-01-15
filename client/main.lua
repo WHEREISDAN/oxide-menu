@@ -83,6 +83,7 @@ local function TransformLegacyItem(legacyItem, originalIndex)
         isHeader = legacyItem.isMenuHeader,
         disabled = legacyItem.disabled,
         hidden = legacyItem.hidden,
+        persist = legacyItem.persist,
         _legacyIndex = originalIndex,
     }
 
@@ -95,6 +96,11 @@ local function TransformLegacyItem(legacyItem, originalIndex)
 
     if legacyItem.params then
         local params = legacyItem.params
+
+        -- Support persist in params
+        if params.persist ~= nil then
+            item.persist = params.persist
+        end
 
         if params.isAction and type(params.event) == 'function' then
             legacyActions[originalIndex] = function() params.event(params.args) end
@@ -116,10 +122,11 @@ local function TransformLegacyItem(legacyItem, originalIndex)
     return item
 end
 
-local function TransformLegacyMenu(legacyData)
+local function TransformLegacyMenu(legacyData, options)
     if not legacyData or not next(legacyData) then return nil end
 
     legacyActions = {}
+    options = options or {}
 
     local items = {}
     local title = nil
@@ -140,7 +147,8 @@ local function TransformLegacyMenu(legacyData)
         title = title,
         position = Config.Position,
         items = items,
-        isLegacy = true
+        isLegacy = true,
+        persist = options.persist
     }
 end
 
@@ -243,14 +251,14 @@ end
 
 -- Legacy API Functions
 
-local function OpenMenu(data, sort, skipFirst)
+local function OpenMenu(data, sort, skipFirst, options)
     if not data or not next(data) then return end
 
     if sort then
         data = SortLegacyData(data, skipFirst)
     end
 
-    local menuData = TransformLegacyMenu(data)
+    local menuData = TransformLegacyMenu(data, options)
     if menuData then
         Open(menuData)
     end
@@ -270,34 +278,62 @@ end
 
 -- NUI Callbacks
 
+local function ShouldPersist(menu, item)
+    -- Item-level persist takes priority
+    if item.persist ~= nil then
+        return item.persist == true
+    end
+    -- Fall back to menu-level persist
+    if menu and menu.persist ~= nil then
+        return menu.persist == true
+    end
+    -- Fall back to global config
+    if Config.Persist and Config.Persist.enabled then
+        return true
+    end
+    -- Default: don't persist
+    return false
+end
+
 RegisterNUICallback('onSelect', function(data, cb)
     cb('ok')
     if not currentMenu then return end
     if not data or type(data.item) ~= 'table' or not data.index then return end
 
     local item = data.item
-    Debug('Item selected:', data.index)
-
-    SetNuiFocus(false, false)
-    SendNUIMessage({ action = 'CLOSE_MENU', data = {} })
-
+    local menuRef = currentMenu
     local menuId = currentMenu.id
     local wasLegacy = currentMenu.isLegacy
-    isOpen = false
-    currentMenu = nil
+    local shouldPersist = ShouldPersist(currentMenu, item)
 
+    Debug('Item selected:', data.index, 'persist:', shouldPersist)
+
+    -- Only close menu if not persisting
+    if not shouldPersist then
+        SetNuiFocus(false, false)
+        SendNUIMessage({ action = 'CLOSE_MENU', data = {} })
+        isOpen = false
+        currentMenu = nil
+    end
+
+    -- Execute legacy action functions
     if wasLegacy and item._hasAction and item._legacyIndex then
         local actionFn = legacyActions[item._legacyIndex]
         if actionFn then
             actionFn()
-            legacyActions = {}
-            TriggerEvent('qb-menu:client:menuClosed')
+            if not shouldPersist then
+                legacyActions = {}
+                TriggerEvent('qb-menu:client:menuClosed')
+            end
             return
         end
     end
 
-    legacyActions = {}
+    if not shouldPersist then
+        legacyActions = {}
+    end
 
+    -- Execute event/command actions
     if item.event then
         if IsEventAllowed(item.event, 'client') then
             TriggerEvent(item.event, item.args)
@@ -316,13 +352,19 @@ RegisterNUICallback('onSelect', function(data, cb)
         end
     end
 
+    -- Execute onSelect callback
     if menuId and menuCallbacks[menuId] then
         local callback = menuCallbacks[menuId].onSelect
-        if callback then callback(item, data.index) end
-        menuCallbacks[menuId] = nil
+        if callback then
+            -- Pass persist state so callback knows menu is still open
+            callback(item, data.index, shouldPersist)
+        end
+        if not shouldPersist then
+            menuCallbacks[menuId] = nil
+        end
     end
 
-    if wasLegacy then
+    if wasLegacy and not shouldPersist then
         TriggerEvent('qb-menu:client:menuClosed')
     end
 end)
@@ -555,6 +597,43 @@ if Config.Debug then
         })
     end, false)
 
+    -- Persist demo (menu stays open after selection)
+    RegisterCommand('oxidemenu7', function()
+        Open({
+            id = 'demo-persist',
+            title = '24/7 Quick Shop',
+            subtitle = 'Menu stays open!',
+            persist = true,  -- Menu-level persist
+            items = {
+                { label = 'QUICK BUY', isHeader = true },
+                { label = 'Water', description = '$2 - Click to buy', icon = 'fas fa-tint', event = 'oxide-menu:demo:notify', args = { msg = 'Bought Water!' } },
+                { label = 'Bread', description = '$3 - Click to buy', icon = 'fas fa-bread-slice', event = 'oxide-menu:demo:notify', args = { msg = 'Bought Bread!' } },
+                { label = 'Bandage', description = '$10 - Click to buy', icon = 'fas fa-band-aid', event = 'oxide-menu:demo:notify', args = { msg = 'Bought Bandage!' } },
+                { type = 'divider' },
+                { label = 'Exit Shop', description = 'Close the menu', icon = 'fas fa-door-open', persist = false },  -- Override: this closes
+            }
+        })
+    end, false)
+
+    -- Mixed persist demo
+    RegisterCommand('oxidemenu8', function()
+        Open({
+            id = 'demo-persist-mixed',
+            title = 'Vehicle Controls',
+            subtitle = 'Item-level persist',
+            items = {
+                { label = 'TOGGLES (stay open)', isHeader = true },
+                { label = 'Toggle Engine', icon = 'fas fa-power-off', persist = true, event = 'oxide-menu:demo:notify', args = { msg = 'Engine toggled!' } },
+                { label = 'Toggle Lights', icon = 'fas fa-lightbulb', persist = true, event = 'oxide-menu:demo:notify', args = { msg = 'Lights toggled!' } },
+                { label = 'Lock/Unlock', icon = 'fas fa-lock', persist = true, event = 'oxide-menu:demo:notify', args = { msg = 'Lock toggled!' } },
+                { type = 'divider' },
+                { label = 'ACTIONS (close menu)', isHeader = true },
+                { label = 'Store Vehicle', icon = 'fas fa-warehouse', event = 'oxide-menu:demo:notify', args = { msg = 'Vehicle stored!' } },
+                { label = 'Transfer Keys', icon = 'fas fa-key', event = 'oxide-menu:demo:notify', args = { msg = 'Keys transferred!' } },
+            }
+        })
+    end, false)
+
     -- Demo event handlers
     RegisterNetEvent('oxide-menu:demo:notify', function(data)
         QBCore.Functions.Notify(data.msg or 'Action completed!', 'success')
@@ -575,5 +654,5 @@ if Config.Debug then
         QBCore.Functions.Notify(item.label .. ' set to: ' .. value, 'primary')
     end)
 
-    print('[oxide-menu] Debug mode enabled - Demo commands: /oxidemenu, /oxidemenu2, /oxidemenu3, /oxidemenu4, /oxidemenu5, /oxidemenu6')
+    print('[oxide-menu] Debug mode enabled - Demo commands: /oxidemenu, /oxidemenu2, /oxidemenu3, /oxidemenu4, /oxidemenu5, /oxidemenu6, /oxidemenu7, /oxidemenu8')
 end

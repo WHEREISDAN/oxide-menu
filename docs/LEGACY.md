@@ -203,6 +203,35 @@ The legacy qb-menu item format is fully supported:
 }
 ```
 
+### Item with Persist (Keep Menu Open)
+
+```lua
+-- Item-level persist
+{
+    header = 'Buy Water',
+    txt = 'Menu stays open',
+    icon = 'fas fa-tint',
+    persist = true,  -- Keep menu open after selection
+    params = {
+        isServer = true,
+        event = 'shop:buyItem',
+        args = { item = 'water' }
+    }
+}
+
+-- Or persist in params
+{
+    header = 'Buy Bread',
+    txt = 'Menu stays open',
+    params = {
+        isServer = true,
+        event = 'shop:buyItem',
+        args = { item = 'bread' },
+        persist = true  -- Also works here
+    }
+}
+```
+
 ---
 
 ## Legacy Events
@@ -236,12 +265,14 @@ When you use `openMenu`, items are transformed to the modern format internally.
 | `icon` | `icon` |
 | `disabled` | `disabled` |
 | `hidden` | `hidden` |
+| `persist` | `persist` |
 | `params.event` | `event` or `serverEvent` |
 | `params.args` | `args` |
 | `params.isServer` | Uses `serverEvent` |
 | `params.isCommand` | Uses `command` |
 | `params.isQBCommand` | Uses `qbCommand` |
 | `params.isAction` | Stored in action lookup |
+| `params.persist` | `persist` |
 | `action` (function) | Stored in action lookup |
 
 ### Example Transformation
@@ -405,11 +436,13 @@ exports['oxide-menu']:open({
 | `icon` | Full (enhanced) |
 | `disabled` | Full |
 | `hidden` | Full |
+| `persist` | Full (new feature) |
 | `params.event` | Full |
 | `params.isServer` | Full |
 | `params.isCommand` | Full |
 | `params.isQBCommand` | Full |
 | `params.isAction` | Full |
+| `params.persist` | Full (new feature) |
 | `action` function | Full |
 | `params.args` | Full |
 | Sort functionality | Full |

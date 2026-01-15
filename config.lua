@@ -38,6 +38,11 @@ Config.Sound = {
     close = true            -- Play sound on close
 }
 
+-- Menu persistence (keep menu open after item selection)
+Config.Persist = {
+    enabled = false,        -- Global default: false = close after selection, true = stay open
+}
+
 -- Debug mode
 Config.Debug = false
 

@@ -16,6 +16,7 @@ Modern Menu System for QBCore Framework - A sleek, glassmorphic menu with suppor
 - Searchable menus with automatic filtering
 - Keyboard navigation (arrow keys, enter, escape)
 - Submenu support with history navigation
+- Menu persistence (keep open after selection)
 - Header sections and dividers
 
 ### Interactive Elements
@@ -83,6 +84,10 @@ Config.Sound = {
     close = true
 }
 
+Config.Persist = {
+    enabled = false,            -- Global default for menu persistence
+}
+
 Config.Security = {
     ValidateEvents = false,     -- Enable to enforce whitelists
     AllowedServerEvents = {},
@@ -105,11 +110,13 @@ exports['oxide-menu']:open({
     subtitle = 'Optional subtitle',
     position = 'right',
     searchable = true,
+    persist = false,  -- Keep menu open after selection (default: false)
     items = {
         { label = 'Option 1', description = 'Description', icon = 'fas fa-star' },
         { label = 'Option 2', icon = 'fas fa-cog', event = 'my-event', args = { data = 'value' } },
         { type = 'divider' },
         { label = 'Server Action', serverEvent = 'my-server-event', args = {} },
+        { label = 'Stay Open', persist = true, event = 'my-event' },  -- Item-level override
     },
     onSelect = function(item, index)
         print('Selected:', item.label)
@@ -178,6 +185,7 @@ exports['oxide-menu']:showHeader(menuData)
     description = 'Optional description',
     icon = 'fas fa-icon',           -- Font Awesome or item image
     disabled = false,
+    persist = false,                -- Keep menu open after selection
 
     -- Action (choose one):
     event = 'client:event',         -- Client event
@@ -297,6 +305,8 @@ When `Config.Debug = true`, these test commands are available:
 | `/oxidemenu4` | Searchable shop menu |
 | `/oxidemenu5` | Legacy format showcase |
 | `/oxidemenu6 [pos]` | Position testing (left/center/right) |
+| `/oxidemenu7` | Menu-level persist (shop) |
+| `/oxidemenu8` | Item-level persist (vehicle controls) |
 
 ## Documentation
 

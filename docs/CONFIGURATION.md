@@ -14,6 +14,7 @@ Complete configuration options for Oxide Menu.
 - [Search Settings](#search-settings)
 - [Keyboard Settings](#keyboard-settings)
 - [Sound Settings](#sound-settings)
+- [Persist Settings](#persist-settings)
 - [Security Settings](#security-settings)
 - [Debug Mode](#debug-mode)
 
@@ -249,6 +250,56 @@ Config.Sound = {
 
 ---
 
+## Persist Settings
+
+### Config.Persist
+
+Controls whether menus stay open after item selection by default.
+
+```lua
+Config.Persist = {
+    enabled = false,  -- Global default for menu persistence
+}
+```
+
+### How Persistence Works
+
+By default, menus close after selecting an item. When persistence is enabled, the menu stays open, allowing multiple selections without reopening.
+
+### Priority Order
+
+Persistence is determined in this order (first match wins):
+
+1. **Item-level** - `item.persist = true/false`
+2. **Menu-level** - `menu.persist = true/false`
+3. **Global config** - `Config.Persist.enabled`
+4. **Default** - `false` (close after selection)
+
+### Examples
+
+```lua
+-- Global default: menus stay open
+Config.Persist = {
+    enabled = true,
+}
+```
+
+With this config:
+- All menus stay open by default
+- Individual menus can override with `persist = false`
+- Individual items can override with `persist = false`
+
+### Use Cases
+
+| Scenario | Recommendation |
+|----------|----------------|
+| Shop menus | `persist = true` on menu |
+| Settings/toggle menus | `persist = true` on specific items |
+| One-time actions | Default (no persist) |
+| Exit/close buttons | `persist = false` to override |
+
+---
+
 ## Security Settings
 
 ### Config.Security
@@ -386,6 +437,11 @@ Config.Sound = {
     hover = true,
     select = true,
     close = true
+}
+
+-- Menu persistence
+Config.Persist = {
+    enabled = false,
 }
 
 -- Debug mode

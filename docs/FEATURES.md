@@ -12,6 +12,7 @@ Complete feature documentation for Oxide Menu.
 - [Search Functionality](#search-functionality)
 - [Keyboard Navigation](#keyboard-navigation)
 - [Submenu System](#submenu-system)
+- [Menu Persistence](#menu-persistence)
 - [QBCore Integration](#qbcore-integration)
 - [Sound Effects](#sound-effects)
 - [Security Features](#security-features)
@@ -308,6 +309,103 @@ exports['oxide-menu']:open({
 
 ---
 
+## Menu Persistence
+
+Keep menus open after item selection for improved UX in shops, settings, and toggle menus.
+
+### Why Use Persistence?
+
+By default, menus close after selecting an item. This can be frustrating when:
+- Buying multiple items from a shop
+- Toggling multiple settings
+- Using quick-action vehicle controls
+
+### Persist Levels
+
+Persistence can be set at three levels, with item-level taking priority:
+
+| Level | Property | Description |
+|-------|----------|-------------|
+| Global | `Config.Persist.enabled` | Default for all menus |
+| Menu | `persist = true` | All items in this menu |
+| Item | `persist = true/false` | Override for specific item |
+
+### Menu-Level Persist
+
+All items keep the menu open:
+
+```lua
+exports['oxide-menu']:open({
+    title = 'Quick Shop',
+    persist = true,  -- All items stay open
+    items = {
+        { label = 'Buy Water', serverEvent = 'shop:buy', args = { item = 'water' } },
+        { label = 'Buy Bread', serverEvent = 'shop:buy', args = { item = 'bread' } },
+        { label = 'Exit', persist = false },  -- Override: this closes
+    }
+})
+```
+
+### Item-Level Persist
+
+Individual items stay open:
+
+```lua
+exports['oxide-menu']:open({
+    title = 'Vehicle Controls',
+    items = {
+        -- These stay open
+        { label = 'Toggle Engine', persist = true, event = 'vehicle:engine' },
+        { label = 'Toggle Lights', persist = true, event = 'vehicle:lights' },
+        -- These close (default)
+        { label = 'Store Vehicle', serverEvent = 'vehicle:store' },
+    }
+})
+```
+
+### Legacy Format Support
+
+Persist works with the legacy qb-menu format:
+
+```lua
+exports['oxide-menu']:openMenu({
+    {
+        header = 'Buy Item',
+        txt = 'Stays open after purchase',
+        persist = true,  -- Item-level
+        params = { event = 'shop:buy' }
+    },
+    -- Or in params
+    {
+        header = 'Buy Item',
+        params = {
+            event = 'shop:buy',
+            persist = true  -- Also works here
+        }
+    }
+})
+```
+
+### onSelect Callback
+
+The `onSelect` callback receives a third parameter indicating persist state:
+
+```lua
+exports['oxide-menu']:open({
+    persist = true,
+    items = { ... },
+    onSelect = function(item, index, isPersisting)
+        if isPersisting then
+            -- Menu is still open, maybe update item labels
+        else
+            -- Menu closed normally
+        end
+    end
+})
+```
+
+---
+
 ## QBCore Integration
 
 Seamless integration with QBCore framework.
@@ -456,6 +554,7 @@ When `Config.Debug = true`, blocked events are logged:
 | Sliders | No | Yes |
 | Inputs | No | Yes |
 | Submenus | Limited | Full support |
+| Menu persistence | No | Yes |
 | Security | No | Optional whitelist |
 | Callbacks | Limited | Full support |
 

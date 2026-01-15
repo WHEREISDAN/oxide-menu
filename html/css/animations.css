@@ -1,0 +1,206 @@
+/* Oxide Menu - Animations */
+
+/* Menu Enter/Exit */
+
+@keyframes menuSlideInRight {
+    0% {
+        opacity: 0;
+        transform: translateX(24px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes menuSlideOutRight {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+}
+
+@keyframes menuSlideInLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(-24px) scale(0.98);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+}
+
+@keyframes menuSlideOutLeft {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+}
+
+@keyframes menuFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes menuFadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes menuScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes menuScaleOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+}
+
+/* Item Animations */
+
+@keyframes itemSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes itemHighlight {
+    0%, 100% {
+        background: var(--bg-tertiary);
+    }
+    50% {
+        background: var(--bg-hover);
+    }
+}
+
+@keyframes itemPulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Checkbox Toggle */
+
+@keyframes checkIn {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+/* Slider Fill */
+
+@keyframes sliderFill {
+    from {
+        width: 0%;
+    }
+    to {
+        width: var(--fill-percent);
+    }
+}
+
+/* Loading Spinner */
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Utility Classes */
+
+.animate-slide-in-right {
+    animation: menuSlideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-out-right {
+    animation: menuSlideOutRight 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-in-left {
+    animation: menuSlideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-out-left {
+    animation: menuSlideOutLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-fade-in {
+    animation: menuFadeIn 0.15s ease forwards;
+}
+
+.animate-fade-out {
+    animation: menuFadeOut 0.15s ease forwards;
+}
+
+.animate-scale-in {
+    animation: menuScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scale-out {
+    animation: menuScaleOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-item-in {
+    animation: itemSlideIn 0.15s ease forwards;
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+/* Staggered Item Delays */
+
+.menu-item:nth-child(1) { animation-delay: 0ms; }
+.menu-item:nth-child(2) { animation-delay: 20ms; }
+.menu-item:nth-child(3) { animation-delay: 40ms; }
+.menu-item:nth-child(4) { animation-delay: 60ms; }
+.menu-item:nth-child(5) { animation-delay: 80ms; }
+.menu-item:nth-child(6) { animation-delay: 100ms; }
+.menu-item:nth-child(7) { animation-delay: 120ms; }
+.menu-item:nth-child(8) { animation-delay: 140ms; }
+.menu-item:nth-child(9) { animation-delay: 160ms; }
+.menu-item:nth-child(10) { animation-delay: 180ms; }

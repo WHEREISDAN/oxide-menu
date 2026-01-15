@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oxide Menu</title>
+
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./css/variables.css">
+    <link rel="stylesheet" href="./css/animations.css">
+    <link rel="stylesheet" href="./css/main.css">
+
+    <style>
+        /* Fallback styles in case CSS files don't load */
+        body {
+            margin: 0;
+            padding: 0;
+            background: transparent !important;
+            font-family: 'Inter', -apple-system, sans-serif;
+            overflow: hidden;
+        }
+        #app {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // State
+            let isOpen = false;
+            let currentMenu = null;
+            let activeIndex = -1;
+            let searchQuery = '';
+            let menuHistory = [];
+            let justOpened = false;
+
+            const app = document.getElementById('app');
+
+            function escapeHtml(text) {
+                if (!text) return '';
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            function postNUI(callback, data) {
+                fetch('https://' + GetParentResourceName() + '/' + callback, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data || {})
+                }).catch(function() {});
+            }
+
+            function isValidIconUrl(url) {
+                if (!url || typeof url !== 'string') return false;
+                if (url.startsWith('nui://')) return true;
+                if (url.startsWith('./') || url.startsWith('../')) return true;
+                if (url.startsWith('fas ') || url.startsWith('far ') || url.startsWith('fab ') || url.startsWith('fa-')) return true;
+                if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//') || url.startsWith('data:')) return false;
+                return true;
+            }
+
+            function getAccentColor() {
+                return getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#34d399';
+            }
+
+            function getSliderTrackColor() {
+                return getComputedStyle(document.documentElement).getPropertyValue('--bg-tertiary').trim() || 'rgba(255,255,255,0.06)';
+            }
+
+            function renderMenu() {
+                if (!isOpen || !currentMenu) {
+                    app.innerHTML = '';
+                    return;
+                }
+
+                const items = getFilteredItems();
+                const position = currentMenu.position || 'right';
+                const originalItemCount = currentMenu.items ? currentMenu.items.length : 0;
+                const showSearch = currentMenu.searchable !== false && originalItemCount >= 6;
+                const canGoBack = menuHistory.length > 0;
+
+                let html = '<div class="menu-wrapper menu-wrapper--' + position + '">';
+                const animClass = justOpened ? ' animate-slide-in-right' : '';
+                html += '<div class="menu-card' + animClass + '">';
+                justOpened = false;
+
+                if (currentMenu.title) {
+                    html += '<div class="menu-header">';
+                    if (canGoBack) {
+                        html += '<button class="menu-header__back" onclick="window.OxideMenu.goBack()">';
+                        html += '<i class="fas fa-arrow-left"></i>';
+                        html += '</button>';
+                    }
+                    html += '<div class="menu-header__content">';
+                    html += '<div class="menu-header__title">' + escapeHtml(currentMenu.title) + '</div>';
+                    if (currentMenu.subtitle) {
+                        html += '<div class="menu-header__subtitle">' + escapeHtml(currentMenu.subtitle) + '</div>';
+                    }
+                    html += '</div></div>';
+                }
+
+                if (showSearch) {
+                    html += '<div class="menu-search">';
+                    html += '<input type="text" class="menu-search__input" placeholder="Search..." ';
+                    html += 'value="' + escapeHtml(searchQuery) + '" ';
+                    html += 'oninput="window.OxideMenu.onSearch(this.value)" ';
+                    html += 'onkeydown="event.stopPropagation()">';
+                    html += '</div>';
+                }
+
+                html += '<div class="menu-items">';
+
+                let hasVisibleItems = false;
+                items.forEach(function(item, index) {
+                    if (item.hidden) return;
+                    hasVisibleItems = true;
+                    html += renderItem(item, index);
+                });
+
+                if (!hasVisibleItems) {
+                    html += '<div class="menu-empty">No items found</div>';
+                }
+
+                html += '</div></div></div>';
+
+                app.innerHTML = html;
+            }
+
+            function renderItem(item, index) {
+                const type = item.type || 'button';
+
+                if (type === 'divider') {
+                    return '<div class="menu-divider"></div>';
+                }
+
+                if (type === 'checkbox') {
+                    return renderCheckbox(item, index);
+                }
+
+                if (type === 'input') {
+                    return renderInput(item, index);
+                }
+
+                if (type === 'slider') {
+                    return renderSlider(item, index);
+                }
+
+                const isHeader = item.isHeader || item.isMenuHeader;
+                const isDisabled = item.disabled;
+                const isActive = index === activeIndex && !isHeader && !isDisabled;
+
+                let classes = 'menu-item';
+                if (isHeader) classes += ' menu-item--header';
+                if (isDisabled) classes += ' menu-item--disabled';
+                if (isActive) classes += ' menu-item--active';
+
+                let html = '<div class="' + classes + '" data-index="' + index + '" ';
+                if (!isHeader && !isDisabled) {
+                    html += 'onclick="window.OxideMenu.select(' + index + ')" ';
+                    html += 'onmouseenter="window.OxideMenu.hover(' + index + ')"';
+                }
+                html += '>';
+
+                if (item.icon && !isHeader && isValidIconUrl(item.icon)) {
+                    html += '<div class="menu-item__icon">';
+                    if (item.icon.includes('/') || item.icon.includes('.')) {
+                        html += '<img src="' + escapeHtml(item.icon) + '" onerror="this.style.display=\'none\'">';
+                    } else {
+                        html += '<i class="' + escapeHtml(item.icon) + '"></i>';
+                    }
+                    html += '</div>';
+                }
+
+                html += '<div class="menu-item__content">';
+                html += '<div class="menu-item__label">' + escapeHtml(item.label || item.header || '') + '</div>';
+
+                const desc = item.description || item.txt || item.text;
+                if (desc && !isHeader) {
+                    html += '<div class="menu-item__description">' + escapeHtml(desc) + '</div>';
+                }
+                html += '</div>';
+
+                if (item.submenu && !isHeader) {
+                    html += '<div class="menu-item__arrow"><i class="fas fa-chevron-right"></i></div>';
+                }
+
+                html += '</div>';
+                return html;
+            }
+
+            function renderCheckbox(item, index) {
+                const checked = item.checked ? ' menu-checkbox--checked' : '';
+                let html = '<div class="menu-checkbox' + checked + '" onclick="window.OxideMenu.toggleCheckbox(' + index + ')">';
+                html += '<div class="menu-checkbox__toggle"></div>';
+                html += '<div class="menu-checkbox__content">';
+                html += '<div class="menu-checkbox__label">' + escapeHtml(item.label) + '</div>';
+                if (item.description) {
+                    html += '<div class="menu-checkbox__description">' + escapeHtml(item.description) + '</div>';
+                }
+                html += '</div></div>';
+                return html;
+            }
+
+            function renderInput(item, index) {
+                let html = '<div class="menu-input">';
+                if (item.label) {
+                    html += '<label class="menu-input__label">' + escapeHtml(item.label) + '</label>';
+                }
+                html += '<input type="text" class="menu-input__field" ';
+                html += 'placeholder="' + escapeHtml(item.placeholder || '') + '" ';
+                html += 'value="' + escapeHtml(item.value || '') + '" ';
+                html += 'data-index="' + index + '" ';
+                html += 'onkeydown="if(event.key===\'Enter\')window.OxideMenu.submitInput(' + index + ',this.value);event.stopPropagation();">';
+                html += '</div>';
+                return html;
+            }
+
+            function renderSlider(item, index) {
+                const min = item.min || 0;
+                const max = item.max || 100;
+                const value = item.value !== undefined ? item.value : min;
+                const percent = ((value - min) / (max - min)) * 100;
+
+                const accentColor = getAccentColor();
+                const trackColor = getSliderTrackColor();
+                const gradient = 'linear-gradient(to right, ' + accentColor + ' 0%, ' + accentColor + ' ' + percent + '%, ' + trackColor + ' ' + percent + '%, ' + trackColor + ' 100%)';
+
+                let html = '<div class="menu-slider">';
+                html += '<div class="menu-slider__header">';
+                html += '<span class="menu-slider__label">' + escapeHtml(item.label) + '</span>';
+                html += '<span class="menu-slider__value" data-slider-value="' + index + '">' + value + '</span>';
+                html += '</div>';
+                html += '<input type="range" class="menu-slider__input" ';
+                html += 'style="background: ' + gradient + ';" ';
+                html += 'min="' + min + '" max="' + max + '" value="' + value + '" ';
+                html += 'step="' + (item.step || 1) + '" ';
+                html += 'data-index="' + index + '" ';
+                html += 'oninput="window.OxideMenu.changeSlider(' + index + ',this.value)" ';
+                html += 'onmousedown="event.stopPropagation()" ';
+                html += 'onkeydown="event.stopPropagation()">';
+                html += '</div>';
+                return html;
+            }
+
+            function getFilteredItems() {
+                if (!currentMenu || !currentMenu.items) return [];
+
+                let items = currentMenu.items.map(function(item, idx) {
+                    return Object.assign({}, item, { _originalIndex: idx });
+                }).filter(function(item) {
+                    return !item.hidden;
+                });
+
+                if (searchQuery.trim()) {
+                    const query = searchQuery.toLowerCase();
+                    items = items.filter(function(item) {
+                        if (item.isHeader || item.isMenuHeader || item.type === 'divider') return true;
+                        const label = (item.label || item.header || '').toLowerCase();
+                        const desc = (item.description || item.txt || '').toLowerCase();
+                        return label.includes(query) || desc.includes(query);
+                    });
+                }
+
+                return items;
+            }
+
+            function updateItemsOnly() {
+                const itemsContainer = document.querySelector('.menu-items');
+                if (!itemsContainer) {
+                    renderMenu();
+                    return;
+                }
+
+                const items = getFilteredItems();
+                let html = '';
+                let hasVisibleItems = false;
+
+                items.forEach(function(item, index) {
+                    if (item.hidden) return;
+                    hasVisibleItems = true;
+                    html += renderItem(item, index);
+                });
+
+                if (!hasVisibleItems) {
+                    html = '<div class="menu-empty">No items found</div>';
+                }
+
+                itemsContainer.innerHTML = html;
+            }
+
+            function updateActiveState(newIndex, playSound) {
+                const oldActive = document.querySelector('.menu-item--active');
+                if (oldActive) {
+                    oldActive.classList.remove('menu-item--active');
+                }
+
+                activeIndex = newIndex;
+
+                if (newIndex >= 0) {
+                    const newActive = document.querySelector('.menu-item[data-index="' + newIndex + '"]');
+                    if (newActive && !newActive.classList.contains('menu-item--header') && !newActive.classList.contains('menu-item--disabled')) {
+                        newActive.classList.add('menu-item--active');
+                        if (playSound) {
+                            postNUI('onSound', { type: 'hover' });
+                        }
+                        newActive.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    }
+                }
+            }
+
+            window.OxideMenu = {
+                select: function(index) {
+                    const items = getFilteredItems();
+                    const item = items[index];
+                    if (!item || item.disabled || item.isHeader || item.isMenuHeader) return;
+
+                    const originalIndex = item._originalIndex !== undefined ? item._originalIndex : index;
+                    postNUI('onSound', { type: 'select' });
+                    postNUI('onSelect', { index: originalIndex + 1, item: item });
+                },
+
+                hover: function(index) {
+                    if (activeIndex !== index) {
+                        updateActiveState(index, true);
+                    }
+                },
+
+                goBack: function() {
+                    if (menuHistory.length > 0) {
+                        currentMenu = menuHistory.pop();
+                        searchQuery = '';
+                        activeIndex = -1;
+                        renderMenu();
+                        postNUI('onBack', {});
+                    }
+                },
+
+                onSearch: function(query) {
+                    searchQuery = query;
+                    activeIndex = -1;
+                    updateItemsOnly();
+                },
+
+                toggleCheckbox: function(index) {
+                    const items = getFilteredItems();
+                    const item = items[index];
+                    if (!item) return;
+
+                    const originalIndex = item._originalIndex !== undefined ? item._originalIndex : index;
+                    if (currentMenu && currentMenu.items && currentMenu.items[originalIndex]) {
+                        currentMenu.items[originalIndex].checked = !currentMenu.items[originalIndex].checked;
+                    }
+                    renderMenu();
+                    const updatedItem = currentMenu.items[originalIndex];
+                    postNUI('onCheckboxChange', { index: originalIndex + 1, checked: updatedItem.checked, item: updatedItem });
+                },
+
+                submitInput: function(index, value) {
+                    const items = getFilteredItems();
+                    const item = items[index];
+                    const originalIndex = item && item._originalIndex !== undefined ? item._originalIndex : index;
+                    postNUI('onInputSubmit', { index: originalIndex + 1, value: value, item: item });
+                },
+
+                changeSlider: function(index, value) {
+                    const items = getFilteredItems();
+                    const item = items[index];
+                    if (!item) return;
+
+                    const originalIndex = item._originalIndex !== undefined ? item._originalIndex : index;
+                    const intValue = parseInt(value);
+
+                    if (currentMenu && currentMenu.items && currentMenu.items[originalIndex]) {
+                        currentMenu.items[originalIndex].value = intValue;
+                    }
+
+                    const slider = document.querySelector('.menu-slider__input[data-index="' + index + '"]');
+                    if (slider) {
+                        const valueSpan = document.querySelector('[data-slider-value="' + index + '"]');
+                        if (valueSpan) valueSpan.textContent = intValue;
+
+                        const min = parseInt(slider.min) || 0;
+                        const max = parseInt(slider.max) || 100;
+                        const percent = ((intValue - min) / (max - min)) * 100;
+                        const accentColor = getAccentColor();
+                        const trackColor = getSliderTrackColor();
+                        slider.style.background = 'linear-gradient(to right, ' + accentColor + ' 0%, ' + accentColor + ' ' + percent + '%, ' + trackColor + ' ' + percent + '%, ' + trackColor + ' 100%)';
+                    }
+                    const updatedItem = currentMenu.items[originalIndex];
+                    postNUI('onSliderChange', { index: originalIndex + 1, value: intValue, item: updatedItem });
+                }
+            };
+
+            window.addEventListener('message', function(event) {
+                if (!event.data) return;
+
+                const action = event.data.action;
+                const data = event.data.data;
+
+                switch (action) {
+                    case 'OPEN_MENU':
+                        if (isOpen && currentMenu) {
+                            menuHistory.push(currentMenu);
+                        }
+                        currentMenu = data;
+                        isOpen = true;
+                        activeIndex = -1;
+                        searchQuery = '';
+                        justOpened = true;
+                        renderMenu();
+                        break;
+
+                    case 'CLOSE_MENU':
+                        isOpen = false;
+                        currentMenu = null;
+                        menuHistory = [];
+                        activeIndex = -1;
+                        searchQuery = '';
+                        renderMenu();
+                        break;
+
+                    case 'SET_THEME':
+                        if (data && data.theme) {
+                            document.documentElement.setAttribute('data-theme', data.theme);
+                        }
+                        break;
+                }
+            });
+
+            window.addEventListener('keydown', function(event) {
+                if (!isOpen) return;
+
+                const activeElement = document.activeElement;
+                if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                    if (event.key === 'Escape') {
+                        activeElement.blur();
+                    }
+                    return;
+                }
+
+                const items = getFilteredItems();
+                const enabledIndices = [];
+                items.forEach(function(item, index) {
+                    if (!item.disabled && !item.isHeader && !item.isMenuHeader && item.type !== 'divider') {
+                        enabledIndices.push(index);
+                    }
+                });
+
+                switch (event.key) {
+                    case 'ArrowUp':
+                        event.preventDefault();
+                        if (enabledIndices.length > 0) {
+                            const currentPos = enabledIndices.indexOf(activeIndex);
+                            let newIndex;
+                            if (currentPos > 0) {
+                                newIndex = enabledIndices[currentPos - 1];
+                            } else {
+                                newIndex = enabledIndices[enabledIndices.length - 1];
+                            }
+                            updateActiveState(newIndex, true);
+                        }
+                        break;
+
+                    case 'ArrowDown':
+                        event.preventDefault();
+                        if (enabledIndices.length > 0) {
+                            const currentPos = enabledIndices.indexOf(activeIndex);
+                            let newIndex;
+                            if (currentPos < enabledIndices.length - 1) {
+                                newIndex = enabledIndices[currentPos + 1];
+                            } else {
+                                newIndex = enabledIndices[0];
+                            }
+                            updateActiveState(newIndex, true);
+                        }
+                        break;
+
+                    case 'Enter':
+                        event.preventDefault();
+                        if (activeIndex >= 0) {
+                            window.OxideMenu.select(activeIndex);
+                        }
+                        break;
+
+                    case 'Backspace':
+                        event.preventDefault();
+                        if (menuHistory.length > 0) {
+                            window.OxideMenu.goBack();
+                        }
+                        break;
+
+                    case 'Escape':
+                        event.preventDefault();
+                        postNUI('onSound', { type: 'close' });
+                        postNUI('onClose', {});
+                        isOpen = false;
+                        currentMenu = null;
+                        menuHistory = [];
+                        activeIndex = -1;
+                        searchQuery = '';
+                        app.innerHTML = '';
+                        break;
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

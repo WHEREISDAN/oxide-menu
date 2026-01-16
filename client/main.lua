@@ -187,7 +187,8 @@ local function Open(menuData)
     if menuData.id then
         menuCallbacks[menuData.id] = {
             onClose = menuData.onClose,
-            onSelect = menuData.onSelect
+            onSelect = menuData.onSelect,
+            onRefresh = menuData.onRefresh
         }
     end
 
@@ -431,6 +432,21 @@ RegisterNUICallback('onSelect', function(data, cb)
                 end
             end
         end
+
+        -- Call onRefresh if defined and menu is persisting (and onSelect didn't return data)
+        if shouldPersist and menuCallbacks[menuId] then
+            local refreshCallback = menuCallbacks[menuId].onRefresh
+            if refreshCallback then
+                local refreshResult = refreshCallback(item, data.index)
+                if refreshResult and type(refreshResult) == 'table' then
+                    if refreshResult[1] or refreshResult.items then
+                        local updateData = refreshResult.items and refreshResult or { items = refreshResult }
+                        Update(updateData)
+                    end
+                end
+            end
+        end
+
         if not shouldPersist then
             menuCallbacks[menuId] = nil
         end
@@ -816,6 +832,47 @@ if Config.Debug then
         })
     end, false)
 
+    -- onRefresh callback demo
+    local demoInventory = { water = 3, bread = 2, bandage = 1 }
+
+    RegisterCommand('oxidemenu11', function()
+        -- Reset for demo
+        demoInventory = { water = 3, bread = 2, bandage = 1 }
+
+        local function buildItems()
+            return {
+                { label = 'INVENTORY', isHeader = true },
+                { label = 'Water x' .. demoInventory.water, icon = 'fas fa-tint', disabled = demoInventory.water <= 0, _use = 'water' },
+                { label = 'Bread x' .. demoInventory.bread, icon = 'fas fa-bread-slice', disabled = demoInventory.bread <= 0, _use = 'bread' },
+                { label = 'Bandage x' .. demoInventory.bandage, icon = 'fas fa-band-aid', disabled = demoInventory.bandage <= 0, _use = 'bandage' },
+                { type = 'divider' },
+                { label = 'Refill All', icon = 'fas fa-plus', _refill = true },
+                { label = 'Close', icon = 'fas fa-times', persist = false },
+            }
+        end
+
+        Open({
+            id = 'demo-onrefresh',
+            title = 'Use Items',
+            subtitle = 'onRefresh rebuilds menu',
+            persist = true,
+            items = buildItems(),
+            onSelect = function(item)
+                if item._use and demoInventory[item._use] and demoInventory[item._use] > 0 then
+                    demoInventory[item._use] = demoInventory[item._use] - 1
+                    QBCore.Functions.Notify('Used ' .. item._use .. '!', 'success')
+                elseif item._refill then
+                    demoInventory = { water = 3, bread = 2, bandage = 1 }
+                    QBCore.Functions.Notify('Inventory refilled!', 'success')
+                end
+            end,
+            onRefresh = function()
+                -- Called automatically after onSelect when persist=true
+                return buildItems()
+            end
+        })
+    end, false)
+
     -- Demo event handlers
     RegisterNetEvent('oxide-menu:demo:notify', function(data)
         QBCore.Functions.Notify(data.msg or 'Action completed!', 'success')
@@ -836,5 +893,5 @@ if Config.Debug then
         QBCore.Functions.Notify(item.label .. ' set to: ' .. value, 'primary')
     end)
 
-    print('[oxide-menu] Debug mode enabled - Demo commands: /oxidemenu through /oxidemenu10')
+    print('[oxide-menu] Debug mode enabled - Demo commands: /oxidemenu through /oxidemenu11')
 end

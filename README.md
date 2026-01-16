@@ -124,6 +124,9 @@ exports['oxide-menu']:open({
     end,
     onClose = function()
         print('Menu closed')
+    end,
+    onRefresh = function()
+        return getUpdatedItems()  -- Called after onSelect when persist=true
     end
 })
 
@@ -315,6 +318,7 @@ When `Config.Debug = true`, these test commands are available:
 | `/oxidemenu8` | Item-level persist (vehicle controls) |
 | `/oxidemenu9` | Live updates (onSelect return) |
 | `/oxidemenu10` | Live updates (updateItem export) |
+| `/oxidemenu11` | Live updates (onRefresh callback) |
 
 ## Documentation
 

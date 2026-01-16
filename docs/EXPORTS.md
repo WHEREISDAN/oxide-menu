@@ -68,6 +68,7 @@ exports['oxide-menu']:open(menuData)
 | items | table | {} | Array of menu items |
 | onSelect | function | nil | Callback when item selected |
 | onClose | function | nil | Callback when menu closed |
+| onRefresh | function | nil | Callback to rebuild items after selection (persist menus) |
 
 #### Returns
 
@@ -839,6 +840,40 @@ local function OpenCounterMenu()
             exports['oxide-menu']:updateItem(index, {
                 description = 'Clicks: ' .. counts[item._idx]
             })
+        end
+    })
+end
+```
+
+### Live Updating with onRefresh Callback
+
+```lua
+-- Cleanest approach: separate data logic from refresh logic
+local inventory = { water = 5, bread = 3 }
+
+local function buildItems()
+    return {
+        { label = 'Water x' .. inventory.water, disabled = inventory.water <= 0, _item = 'water' },
+        { label = 'Bread x' .. inventory.bread, disabled = inventory.bread <= 0, _item = 'bread' },
+        { label = 'Exit', persist = false },
+    }
+end
+
+local function OpenInventory()
+    exports['oxide-menu']:open({
+        id = 'inventory',
+        title = 'Use Items',
+        persist = true,
+        items = buildItems(),
+        onSelect = function(item)
+            -- Just handle the action, don't worry about refresh
+            if item._item and inventory[item._item] > 0 then
+                inventory[item._item] = inventory[item._item] - 1
+            end
+        end,
+        onRefresh = function()
+            -- Called automatically after onSelect when persist=true
+            return buildItems()
         end
     })
 end

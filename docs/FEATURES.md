@@ -422,14 +422,41 @@ When using `persist = true`, the menu stays open but displays stale data:
 
 | Method | Use Case | Performance |
 |--------|----------|-------------|
+| `onRefresh` callback | Auto-refresh after selection | Good (cleanest) |
 | `onSelect` return | Refresh after selection | Good |
 | `update()` | Replace all items | Good |
 | `updateItem()` | Update single item | Best |
 | Server events | External triggers | Good |
 
+### onRefresh Callback (Recommended)
+
+Define a function that returns fresh items. Called automatically after `onSelect` when `persist=true`:
+
+```lua
+local stock = { water = 5 }
+
+local function buildItems()
+    return {
+        { label = 'Water', description = 'Stock: ' .. stock.water, _item = 'water' },
+        { label = 'Exit', persist = false },
+    }
+end
+
+exports['oxide-menu']:open({
+    persist = true,
+    items = buildItems(),
+    onSelect = function(item)
+        if item._item then stock[item._item] = stock[item._item] - 1 end
+    end,
+    onRefresh = function()
+        return buildItems()  -- Called after onSelect
+    end
+})
+```
+
 ### onSelect Return Value
 
-Return new items from `onSelect` to auto-refresh:
+Alternatively, return new items from `onSelect` to refresh:
 
 ```lua
 exports['oxide-menu']:open({

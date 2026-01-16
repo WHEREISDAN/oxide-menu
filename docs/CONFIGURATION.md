@@ -350,18 +350,18 @@ Config.Security = {
 
 ### Empty Whitelists
 
-If a whitelist is empty, all events of that type are allowed:
+If a whitelist is empty, all events of that type are **blocked**:
 
 ```lua
 Config.Security = {
     ValidateEvents = true,
-    AllowedServerEvents = {},   -- Empty = allow all server events
-    AllowedClientEvents = {'specific:event'},  -- Only this client event
-    AllowedCommands = {},       -- Empty = allow all commands
+    AllowedServerEvents = {},   -- Empty = block all server events
+    AllowedClientEvents = {'specific:event'},  -- Only this client event allowed
+    AllowedCommands = {},       -- Empty = block all commands
 }
 ```
 
-> **Warning:** Enabling security may break existing menus if their events aren't whitelisted. Test thoroughly.
+> **Warning:** Enabling security will block all events/commands not explicitly whitelisted. You must add every event your menus use to the appropriate whitelist. Test thoroughly.
 
 ---
 
@@ -380,11 +380,16 @@ Config.Debug = false  -- Set to true for development
 1. **Console Logging**: Detailed logs of menu operations
 2. **Demo Commands**: Test commands become available:
    - `/oxidemenu` - Basic menu
-   - `/oxidemenu2` - Job menu
-   - `/oxidemenu3` - Interactive elements
+   - `/oxidemenu2` - Job menu with headers
+   - `/oxidemenu3` - Interactive elements (checkbox, slider, input)
    - `/oxidemenu4` - Searchable shop
-   - `/oxidemenu5` - Legacy format
-   - `/oxidemenu6 [position]` - Position test
+   - `/oxidemenu5` - Legacy format showcase
+   - `/oxidemenu6 [position]` - Position test (left/center/right)
+   - `/oxidemenu7` - Menu-level persist demo
+   - `/oxidemenu8` - Item-level persist demo
+   - `/oxidemenu9` - Live update with onSelect return
+   - `/oxidemenu10` - Live update with updateItem export
+   - `/oxidemenu11` - Live update with onRefresh callback
 3. **Security Logs**: Blocked events are logged to console
 
 ### Production

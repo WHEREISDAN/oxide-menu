@@ -55,7 +55,8 @@ local function IsEventAllowed(eventName, eventType)
     end
 
     if not whitelist or #whitelist == 0 then
-        return true
+        Debug('Blocked ' .. eventType .. ': ' .. eventName .. ' (empty whitelist)')
+        return false
     end
 
     for _, allowed in ipairs(whitelist) do
@@ -549,8 +550,11 @@ exports('showHeader', ShowHeader)
 
 CreateThread(function()
     SendNUIMessage({
-        action = 'SET_THEME',
-        data = { theme = Config.Theme }
+        action = 'SET_CONFIG',
+        data = {
+            theme = Config.Theme,
+            searchPlaceholder = Config.Search and Config.Search.placeholder or 'Search...'
+        }
     })
 end)
 

@@ -47,6 +47,7 @@
             let searchQuery = '';
             let menuHistory = [];
             let justOpened = false;
+            let searchPlaceholder = 'Search...';
 
             const app = document.getElementById('app');
 
@@ -116,7 +117,7 @@
 
                 if (showSearch) {
                     html += '<div class="menu-search">';
-                    html += '<input type="text" class="menu-search__input" placeholder="Search..." ';
+                    html += '<input type="text" class="menu-search__input" placeholder="' + escapeHtml(searchPlaceholder) + '" ';
                     html += 'value="' + escapeHtml(searchQuery) + '" ';
                     html += 'oninput="window.OxideMenu.onSearch(this.value)" ';
                     html += 'onkeydown="event.stopPropagation()">';
@@ -454,9 +455,14 @@
                         }
                         break;
 
-                    case 'SET_THEME':
-                        if (data && data.theme) {
-                            document.documentElement.setAttribute('data-theme', data.theme);
+                    case 'SET_CONFIG':
+                        if (data) {
+                            if (data.theme) {
+                                document.documentElement.setAttribute('data-theme', data.theme);
+                            }
+                            if (data.searchPlaceholder) {
+                                searchPlaceholder = data.searchPlaceholder;
+                            }
                         }
                         break;
                 }

@@ -28,17 +28,19 @@ Oxide Menu features a professional, modern interface with glassmorphic styling.
 
 | Theme | Description |
 |-------|-------------|
-| **Oxide** | Dark glassmorphic with emerald green accent. Backdrop blur, subtle borders, gradient overlays. |
-| **Dark** | Solid dark theme. Higher contrast, no blur effects. |
+| **Oxide** | Dark semi-transparent with emerald green accent. Subtle borders, smooth shadows. Default theme. |
+| **Dark** | Solid dark theme. Higher contrast, slightly more opaque background. |
 | **Light** | Light background with dark text. Good for bright environments. |
 
 ### Visual Elements
 
-- **Backdrop Blur**: Glass-like transparency effect
-- **Smooth Animations**: Slide, fade, or scale transitions
+- **Semi-transparent Background**: Dark overlay with configurable opacity
+- **Smooth Animations**: Slide animation with CSS transitions
 - **Hover Effects**: Subtle highlighting on item interaction
 - **Focus States**: Clear visual feedback for keyboard navigation
 - **Typography**: Inter font family for clean, readable text
+
+> **Tip:** To add a backdrop blur effect, edit `main.css` and add `backdrop-filter: blur(20px)` to `.menu-card`.
 
 ### Icons
 

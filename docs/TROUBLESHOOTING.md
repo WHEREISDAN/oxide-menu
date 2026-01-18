@@ -365,14 +365,11 @@ Common issues and solutions for Oxide Menu.
 
 **Solutions:**
 
-1. **Check config:**
-   ```lua
-   Config.Keyboard = { enabled = true }
-   ```
+1. **Not focused on input:** Arrow keys work for menu navigation, not when typing in input field. Press Escape to unfocus input.
 
-2. **Not focused on input:** Arrow keys work for menu, not when typing in input field
+2. **Menu must be open:** Navigation only works with active menu
 
-3. **Menu must be open:** Navigation only works with active menu
+3. **Check for NUI focus issues:** Another resource may have stolen focus
 
 ---
 
@@ -386,15 +383,12 @@ Common issues and solutions for Oxide Menu.
 
 1. **Reduce item count:** Very large menus (100+) may be slow
 
-2. **Disable animations:**
-   ```lua
-   Config.Animation = { enabled = false }
-   ```
-
-3. **Disable sounds:**
+2. **Disable sounds:**
    ```lua
    Config.Sound = { enabled = false }
    ```
+
+3. **Disable animations in CSS:** Edit `html/css/animations.css` to reduce or remove animation duration
 
 4. **Check for script errors** causing delays
 
@@ -493,7 +487,7 @@ Yes, you need to change the export name from `'qb-menu'` to `'oxide-menu'`. The 
 ### Why is my search not showing?
 
 Search only appears when:
-- `Config.Search.enabled = true`
+- `Config.Search.enabled = true` (global setting)
 - Menu has >= `Config.Search.minItems` items (default 6)
 - Menu doesn't have `searchable = false`
 
@@ -511,13 +505,6 @@ Config.Animation = {
 
 ```lua
 Config.Width = 400  -- Default is 320
-```
-
-Or in CSS:
-```css
-:root {
-    --menu-width: 400px;
-}
 ```
 
 ### Can I have multiple menus open?

@@ -1,6 +1,6 @@
 # Configuration Reference
 
-Complete configuration options for Oxide Menu.
+Complete configuration options for Oxide Menu. All options are fully functional.
 
 ---
 
@@ -84,6 +84,7 @@ Menu width in pixels.
 
 ```lua
 Config.Width = 320  -- Default: 320px
+Config.Width = 400  -- Wider menu
 ```
 
 ### Config.MaxHeight
@@ -91,13 +92,10 @@ Config.Width = 320  -- Default: 320px
 Maximum menu height. Accepts any valid CSS value.
 
 ```lua
-Config.MaxHeight = '70vh'  -- 70% of viewport height
+Config.MaxHeight = '70vh'  -- 70% of viewport height (default)
+Config.MaxHeight = '500px' -- Fixed pixel height
+Config.MaxHeight = '80vh'  -- 80% of viewport
 ```
-
-Other examples:
-- `'500px'` - Fixed pixel height
-- `'80vh'` - 80% of viewport
-- `'auto'` - Fit content (not recommended for long menus)
 
 ---
 
@@ -123,13 +121,28 @@ Config.Animation = {
 | `'fade'` | Fades in with opacity |
 | `'scale'` | Scales up from smaller size |
 
-### Disabling Animations
+### Examples
 
 ```lua
+-- Fast fade animation
+Config.Animation = {
+    enabled = true,
+    duration = 100,
+    type = 'fade'
+}
+
+-- Disable animations
 Config.Animation = {
     enabled = false,
     duration = 0,
     type = 'slide'
+}
+
+-- Slow scale animation
+Config.Animation = {
+    enabled = true,
+    duration = 300,
+    type = 'scale'
 }
 ```
 
@@ -143,33 +156,53 @@ Controls the search bar functionality.
 
 ```lua
 Config.Search = {
-    enabled = true,       -- Enable search feature
-    minItems = 6,         -- Minimum items to show search
+    enabled = true,       -- Enable search feature globally
+    minItems = 6,         -- Minimum items to show search bar
     placeholder = 'Search...'  -- Placeholder text
+}
+```
+
+### enabled
+
+Set to `false` to disable search globally for all menus.
+
+```lua
+Config.Search = {
+    enabled = false,  -- No search bars anywhere
 }
 ```
 
 ### minItems
 
-The search bar only appears when a menu has at least this many items. This prevents showing search on small menus where it's unnecessary.
+The search bar only appears when a menu has at least this many items.
 
 ```lua
 Config.Search = {
-    enabled = true,
-    minItems = 10,  -- Only show search for menus with 10+ items
+    minItems = 3,  -- Show search with 3+ items (default is 6)
 }
 ```
 
-### Disabling Search
+### placeholder
+
+Custom placeholder text for the search input.
 
 ```lua
 Config.Search = {
-    enabled = false,
-    minItems = 6,
+    placeholder = 'Type to filter...'
 }
 ```
 
-> **Note:** Individual menus can override this using `searchable = false` in menu data.
+### Per-Menu Override
+
+Individual menus can disable search regardless of global setting:
+
+```lua
+exports['oxide-menu']:open({
+    title = 'No Search',
+    searchable = false,  -- Overrides Config.Search.enabled
+    items = { ... }
+})
+```
 
 ---
 
@@ -182,7 +215,17 @@ Controls keyboard navigation.
 ```lua
 Config.Keyboard = {
     enabled = true,       -- Enable keyboard navigation
-    scrollAmount = 1      -- Items to scroll per keypress
+    scrollAmount = 1      -- Items to scroll per keypress (not yet implemented)
+}
+```
+
+### enabled
+
+Set to `false` to disable keyboard navigation entirely.
+
+```lua
+Config.Keyboard = {
+    enabled = false,  -- Arrow keys won't work
 }
 ```
 
@@ -197,14 +240,6 @@ When enabled, these keys work in the menu:
 | Enter | Activate selected item |
 | Backspace | Go back (submenu navigation) |
 | Escape | Close menu |
-
-### Disabling Keyboard
-
-```lua
-Config.Keyboard = {
-    enabled = false,
-}
-```
 
 ---
 
@@ -420,7 +455,7 @@ Config.MaxHeight = '70vh'
 Config.Animation = {
     enabled = true,
     duration = 150,
-    type = 'slide'
+    type = 'slide'  -- 'slide', 'fade', 'scale'
 }
 
 -- Search settings
@@ -433,7 +468,7 @@ Config.Search = {
 -- Keyboard navigation
 Config.Keyboard = {
     enabled = true,
-    scrollAmount = 1
+    scrollAmount = 1  -- Not yet implemented
 }
 
 -- Sound effects

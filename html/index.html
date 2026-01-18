@@ -49,6 +49,14 @@
             let justOpened = false;
             let searchPlaceholder = 'Search...';
 
+            // Config state (set via SET_CONFIG from Lua)
+            let animationEnabled = true;
+            let animationDuration = 150;
+            let animationType = 'slide';
+            let searchEnabled = true;
+            let searchMinItems = 6;
+            let keyboardEnabled = true;
+
             const app = document.getElementById('app');
 
             function escapeHtml(text) {
@@ -92,11 +100,19 @@
                 const items = getFilteredItems();
                 const position = currentMenu.position || 'right';
                 const originalItemCount = currentMenu.items ? currentMenu.items.length : 0;
-                const showSearch = currentMenu.searchable !== false && originalItemCount >= 6;
+                const showSearch = searchEnabled && currentMenu.searchable !== false && originalItemCount >= searchMinItems;
                 const canGoBack = menuHistory.length > 0;
 
                 let html = '<div class="menu-wrapper menu-wrapper--' + position + '">';
-                const animClass = justOpened ? ' animate-slide-in-right' : '';
+                let animClass = '';
+                if (justOpened && animationEnabled) {
+                    const animMap = {
+                        'slide': 'animate-slide-in-right',
+                        'fade': 'animate-fade-in',
+                        'scale': 'animate-scale-in'
+                    };
+                    animClass = ' ' + (animMap[animationType] || 'animate-slide-in-right');
+                }
                 html += '<div class="menu-card' + animClass + '">';
                 justOpened = false;
 
@@ -463,13 +479,42 @@
                             if (data.searchPlaceholder) {
                                 searchPlaceholder = data.searchPlaceholder;
                             }
+                            // Dimension config
+                            if (data.width !== undefined) {
+                                document.documentElement.style.setProperty('--menu-width', data.width + 'px');
+                            }
+                            if (data.maxHeight !== undefined) {
+                                document.documentElement.style.setProperty('--menu-max-height', data.maxHeight);
+                            }
+                            // Animation config
+                            if (data.animationEnabled !== undefined) {
+                                animationEnabled = data.animationEnabled;
+                            }
+                            if (data.animationDuration !== undefined) {
+                                animationDuration = data.animationDuration;
+                                document.documentElement.style.setProperty('--animation-duration', (data.animationDuration / 1000) + 's');
+                            }
+                            if (data.animationType !== undefined) {
+                                animationType = data.animationType;
+                            }
+                            // Search config
+                            if (data.searchEnabled !== undefined) {
+                                searchEnabled = data.searchEnabled;
+                            }
+                            if (data.searchMinItems !== undefined) {
+                                searchMinItems = data.searchMinItems;
+                            }
+                            // Keyboard config
+                            if (data.keyboardEnabled !== undefined) {
+                                keyboardEnabled = data.keyboardEnabled;
+                            }
                         }
                         break;
                 }
             });
 
             window.addEventListener('keydown', function(event) {
-                if (!isOpen) return;
+                if (!isOpen || !keyboardEnabled) return;
 
                 const activeElement = document.activeElement;
                 if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {

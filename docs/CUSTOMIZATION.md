@@ -272,14 +272,14 @@ Defined in `animations.css`:
 #### Slide Animation
 
 ```css
-@keyframes slideInRight {
-    from {
+@keyframes menuSlideInRight {
+    0% {
         opacity: 0;
-        transform: translateX(20px);
+        transform: translateX(24px) scale(0.98);
     }
-    to {
+    100% {
         opacity: 1;
-        transform: translateX(0);
+        transform: translateX(0) scale(1);
     }
 }
 ```
@@ -287,7 +287,7 @@ Defined in `animations.css`:
 #### Fade Animation
 
 ```css
-@keyframes fadeIn {
+@keyframes menuFadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
 }
@@ -296,7 +296,7 @@ Defined in `animations.css`:
 #### Scale Animation
 
 ```css
-@keyframes scaleIn {
+@keyframes menuScaleIn {
     from {
         opacity: 0;
         transform: scale(0.95);
@@ -397,24 +397,31 @@ In `main.css`, the `.menu-card` class controls the main container:
 
 ```css
 .menu-card {
+    width: var(--menu-width);
+    max-height: var(--menu-max-height);
     background: var(--bg-primary);
     border: 1px solid var(--border-primary);
-    border-radius: var(--radius-md);
-    backdrop-filter: blur(20px);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-menu);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    pointer-events: auto;
 }
 ```
 
-### Removing Glassmorphic Effect
+### Adding Glassmorphic Blur Effect
 
-For a solid, non-transparent menu:
+To add a backdrop blur effect (not included by default):
 
 ```css
 .menu-card {
-    backdrop-filter: none;
-    background: rgb(20, 20, 25);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
 }
 ```
+
+> **Note:** Backdrop blur can impact performance and may not work in all FiveM NUI environments.
 
 ### Custom Scrollbar
 

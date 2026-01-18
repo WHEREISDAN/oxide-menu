@@ -450,12 +450,12 @@ exports['oxide-menu']:open({
 
 ### Known Differences
 
-1. **Visual Styling**: Oxide Menu has a modern glassmorphic UI
-2. **Animations**: Menus animate in/out (can be disabled)
-3. **Search**: Large menus show a search bar (can be disabled)
-4. **Keyboard**: Arrow key navigation is enabled (can be disabled)
+1. **Visual Styling**: Oxide Menu has a modern semi-transparent UI
+2. **Animations**: Menus animate in/out (configurable via `Config.Animation`)
+3. **Search**: Menus show a search bar (configurable via `Config.Search`)
+4. **Keyboard**: Arrow key navigation (configurable via `Config.Keyboard.enabled`)
 
-These are additive features that don't break existing functionality.
+These are additive features that don't break existing functionality. All can be configured or disabled in `config.lua`.
 
 ---
 

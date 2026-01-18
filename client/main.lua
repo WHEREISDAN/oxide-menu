@@ -567,8 +567,21 @@ CreateThread(function()
     SendNUIMessage({
         action = 'SET_CONFIG',
         data = {
+            -- Theme
             theme = Config.Theme,
-            searchPlaceholder = Config.Search and Config.Search.placeholder or 'Search...'
+            -- Dimensions
+            width = Config.Width or 320,
+            maxHeight = Config.MaxHeight or '70vh',
+            -- Animation
+            animationEnabled = Config.Animation and Config.Animation.enabled ~= false,
+            animationDuration = Config.Animation and Config.Animation.duration or 150,
+            animationType = Config.Animation and Config.Animation.type or 'slide',
+            -- Search
+            searchEnabled = Config.Search and Config.Search.enabled ~= false,
+            searchMinItems = Config.Search and Config.Search.minItems or 6,
+            searchPlaceholder = Config.Search and Config.Search.placeholder or 'Search...',
+            -- Keyboard
+            keyboardEnabled = Config.Keyboard and Config.Keyboard.enabled ~= false,
         }
     })
 end)

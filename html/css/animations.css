@@ -1,5 +1,10 @@
 /* Oxide Menu - Animations */
 
+/* Animation Duration Variable (set dynamically from config) */
+:root {
+    --animation-duration: 0.15s;
+}
+
 /* Menu Enter/Exit */
 
 @keyframes menuSlideInRight {
@@ -153,35 +158,35 @@
 /* Utility Classes */
 
 .animate-slide-in-right {
-    animation: menuSlideInRight 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: menuSlideInRight var(--animation-duration) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-slide-out-right {
-    animation: menuSlideOutRight 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: menuSlideOutRight var(--animation-duration) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-slide-in-left {
-    animation: menuSlideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: menuSlideInLeft var(--animation-duration) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-slide-out-left {
-    animation: menuSlideOutLeft 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: menuSlideOutLeft var(--animation-duration) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in {
-    animation: menuFadeIn 0.15s ease forwards;
+    animation: menuFadeIn var(--animation-duration) ease forwards;
 }
 
 .animate-fade-out {
-    animation: menuFadeOut 0.15s ease forwards;
+    animation: menuFadeOut var(--animation-duration) ease forwards;
 }
 
 .animate-scale-in {
-    animation: menuScaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: menuScaleIn var(--animation-duration) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-scale-out {
-    animation: menuScaleOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: menuScaleOut var(--animation-duration) cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-item-in {

@@ -158,15 +158,12 @@ In server console or F8:
 ensure oxide-menu
 ```
 
-You should see:
+If debug mode is enabled (`Config.Debug = true`), you'll see:
 ```
-[oxide-menu] NUI initialized
+[oxide-menu] Debug mode enabled - Demo commands: /oxidemenu through /oxidemenu11
 ```
 
-If debug mode is enabled:
-```
-[oxide-menu] Debug mode enabled - Demo commands: /oxidemenu, /oxidemenu2, ...
-```
+If no message appears, the resource is running in production mode (normal).
 
 ### Test Demo Commands
 

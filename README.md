@@ -5,9 +5,9 @@ Modern Menu System for QBCore Framework - A sleek, glassmorphic menu with suppor
 ## Features
 
 ### Modern UI Design
-- Glassmorphic styling with backdrop blur effects
-- Three theme variants: Oxide (dark glass), Dark, Light
-- Smooth animations (slide, fade, scale)
+- Glassmorphic styling with semi-transparent backgrounds
+- Three theme variants: Oxide (dark), Dark, Light
+- Smooth slide-in animations
 - Responsive design for all resolutions
 - Professional typography with Inter font
 
@@ -72,6 +72,7 @@ Config.Animation = {
 Config.Search = {
     enabled = true,
     minItems = 6,               -- Show search when menu has 6+ items
+    placeholder = 'Search...'
 }
 
 Config.Keyboard = {

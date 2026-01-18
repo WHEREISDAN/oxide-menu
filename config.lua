@@ -44,7 +44,7 @@ Config.Persist = {
 }
 
 -- Debug mode
-Config.Debug = false
+Config.Debug = true
 
 -- Security: Event/command validation (backward compatible - disabled by default)
 Config.Security = {

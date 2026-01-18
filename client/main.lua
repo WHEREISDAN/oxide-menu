@@ -178,6 +178,21 @@ end
 
 -- Core Menu Functions
 
+-- Strip function properties from menu data for NUI (functions can't be JSON serialized)
+local function SanitizeForNUI(menuData)
+    if not menuData then return nil end
+    return {
+        id = menuData.id,
+        title = menuData.title,
+        subtitle = menuData.subtitle,
+        position = menuData.position,
+        searchable = menuData.searchable,
+        persist = menuData.persist,
+        items = menuData.items,
+        isLegacy = menuData.isLegacy,
+    }
+end
+
 local function Open(menuData)
     if not menuData then return false end
 
@@ -207,7 +222,7 @@ local function Open(menuData)
     SetNuiFocus(true, true)
     SendNUIMessage({
         action = 'OPEN_MENU',
-        data = menuData
+        data = SanitizeForNUI(menuData)
     })
 
     Debug('Menu opened:', menuData.id or 'unnamed')
@@ -269,7 +284,7 @@ local function Update(data)
 
     SendNUIMessage({
         action = 'UPDATE_MENU',
-        data = currentMenu
+        data = SanitizeForNUI(currentMenu)
     })
 
     Debug('Menu updated')
@@ -305,7 +320,7 @@ local function Refresh()
 
     SendNUIMessage({
         action = 'UPDATE_MENU',
-        data = currentMenu
+        data = SanitizeForNUI(currentMenu)
     })
 
     Debug('Menu refreshed')
